@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doomsday Method</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: #1e1e2e;
+    --accent: #e8ff47;
+    --accent2: #ff6b6b;
+    --accent3: #47c9ff;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --correct: #4ade80;
+    --wrong: #f87171;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .noise {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 4rem;
+  }
+
+  header {
+    display: flex; align-items: baseline; gap: 1rem; margin-bottom: 3rem;
+    border-bottom: 1px solid var(--border); padding-bottom: 1.5rem;
+  }
+  header h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; }
+  header span {
+    font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    color: var(--accent); border: 1px solid var(--accent);
+    padding: 0.2rem 0.6rem; border-radius: 2px; letter-spacing: 0.1em;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex; gap: 0; margin-bottom: 2.5rem;
+    border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+  }
+  .tab {
+    flex: 1; padding: 0.75rem; text-align: center; cursor: pointer;
+    font-family: 'DM Mono', monospace; font-size: 0.8rem; letter-spacing: 0.08em;
+    color: var(--muted); background: transparent; border: none;
+    transition: all 0.2s;
+  }
+  .tab.active { background: var(--accent); color: var(--bg); font-weight: 700; }
+  .tab:hover:not(.active) { color: var(--text); background: var(--border); }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .card h2 {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em;
+    color: var(--accent); margin-bottom: 1.25rem; text-transform: uppercase;
+  }
+
+  /* STEP CARDS */
+  .step { display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1.25rem; }
+  .step-num {
+    font-family: 'DM Mono', monospace; font-size: 1.5rem; font-weight: 500;
+    color: var(--accent); min-width: 2rem; line-height: 1;
+  }
+  .step-body h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem; }
+  .step-body p { font-size: 0.875rem; color: #a0a0b8; line-height: 1.6; }
+
+  code {
+    font-family: 'DM Mono', monospace; background: var(--border);
+    padding: 0.1em 0.4em; border-radius: 3px; font-size: 0.85em;
+    color: var(--accent3);
+  }
+
+  /* TABLES */
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em;
+       color: var(--muted); text-align: left; padding: 0.5rem 0.75rem;
+       border-bottom: 1px solid var(--border); }
+  td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #0e0e18; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .highlight { color: var(--accent); font-weight: 700; }
+
+  /* DAY GRID */
+  .day-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  .day-chip {
+    text-align: center; padding: 0.5rem 0.25rem;
+    background: var(--border); border-radius: 4px;
+    font-family: 'DM Mono', monospace; font-size: 0.8rem;
+  }
+  .day-chip .num { color: var(--accent); font-weight: 700; }
+  .day-chip .name { font-size: 0.65rem; color: var(--muted); margin-top: 0.15rem; }
+
+  /* PRACTICE */
+  .practice-date {
+    text-align: center; padding: 2rem 0 1.5rem;
+  }
+  .practice-date .date-big {
+    font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 800;
+    letter-spacing: -0.04em; line-height: 1;
+    background: linear-gradient(135deg, var(--text), var(--muted));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .day-buttons {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .day-btn {
+    padding: 0.65rem 0.25rem; text-align: center; cursor: pointer;
+    background: var(--border); border: 1px solid transparent;
+    border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    color: var(--text); transition: all 0.15s;
+  }
+  .day-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .day-btn.correct { background: rgba(74,222,128,0.15); border-color: var(--correct); color: var(--correct); }
+  .day-btn.wrong { background: rgba(248,113,113,0.15); border-color: var(--wrong); color: var(--wrong); }
+
+  .new-btn {
+    width: 100%; padding: 0.9rem; background: var(--accent); color: var(--bg);
+    border: none; border-radius: 4px; font-family: 'Syne', sans-serif;
+    font-size: 0.9rem; font-weight: 700; cursor: pointer; letter-spacing: 0.05em;
+    transition: all 0.15s;
+  }
+  .new-btn:hover { background: #d4eb00; }
+
+  /* STEP-BY-STEP SOLUTION */
+  .solution {
+    margin-top: 1.25rem; padding: 1.25rem;
+    background: rgba(232,255,71,0.05); border: 1px solid rgba(232,255,71,0.15);
+    border-radius: 4px; display: none;
+  }
+  .solution.show { display: block; }
+  .solution h3 { font-size: 0.7rem; letter-spacing: 0.15em; color: var(--accent); margin-bottom: 1rem; }
+  .sol-step {
+    display: flex; gap: 0.75rem; margin-bottom: 0.75rem;
+    font-size: 0.85rem; align-items: flex-start;
+  }
+  .sol-label {
+    font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted);
+    min-width: 5.5rem; padding-top: 0.1rem;
+  }
+  .sol-val { color: var(--text); line-height: 1.5; }
+  .sol-val .accent { color: var(--accent); font-family: 'DM Mono', monospace; }
+
+  /* SCORE */
+  .score-bar {
+    display: flex; gap: 1.5rem; justify-content: center;
+    font-family: 'DM Mono', monospace; font-size: 0.85rem; margin-bottom: 1rem;
+  }
+  .score-bar span { color: var(--muted); }
+  .score-bar b { color: var(--text); }
+  #correct-count { color: var(--correct); }
+  #wrong-count { color: var(--wrong); }
+
+  /* CENTURY table accent */
+  .century-row td:first-child { color: var(--accent3); font-family: 'DM Mono', monospace; }
+
+  /* FORMULA BOX */
+  .formula {
+    font-family: 'DM Mono', monospace; font-size: 0.9rem;
+    background: rgba(71,201,255,0.07); border: 1px solid rgba(71,201,255,0.2);
+    border-radius: 4px; padding: 1rem 1.25rem; color: var(--accent3);
+    text-align: center; letter-spacing: 0.05em; margin: 1rem 0;
+  }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="container">
+
+  <header>
+    <h1>Doomsday Method</h1>
+    <span>Day Calculator</span>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('learn')">① Learn</button>
+    <button class="tab" onclick="showTab('ref')">② Reference</button>
+    <button class="tab" onclick="showTab('practice')">③ Practice</button>
+  </div>
+
+  <!-- LEARN TAB -->
+  <div id="tab-learn">
+
+    <div class="card">
+      <h2>What is the Doomsday Algorithm?</h2>
+      <p style="font-size:0.9rem;color:#a0a0b8;line-height:1.7">
+        Invented by mathematician John Conway, Doomsday lets you mentally calculate the day of the week for any date in history. Every year has an <strong style="color:var(--text)">anchor day</strong> called its Doomsday — and certain easy-to-remember dates always fall on that day. Once you know the anchor, finding any date is simple arithmetic.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Step 1 — Find the Century Anchor</h2>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Look up the century</h3>
+          <p>Each century repeats on a cycle of 4. The anchor days for the four possible centuries are:</p>
+          <br>
+          <table>
+            <thead><tr><th>Century (1900s, 2000s…)</th><th>Anchor Day</th><th>Code</th></tr></thead>
+            <tbody>
+              <tr class="century-row"><td>1800s</td><td>Friday</td><td>5</td></tr>
+              <tr class="century-row"><td>1900s</td><td>Wednesday</td><td>3</td></tr>
+              <tr class="century-row"><td>2000s</td><td>Tuesday</td><td>2</td></tr>
+              <tr class="century-row"><td>2100s</td><td>Sunday</td><td>0</td></tr>
+            </tbody>
+          </table>
+          <br>
+          <p>Example: for any date in the <strong style="color:var(--text)">2000s</strong>, the century anchor is <code>2</code> (Tuesday).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Step 2 — Find the Year Anchor</h2>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Calculate with the last two digits (call them <code>y</code>)</h3>
+          <div class="formula">a = (y/12) + (y mod 12) + ((y mod 12)/4)</div>
+          <p>Each part is <strong style="color:var(--text)">floor divided</strong> (throw away the remainder).</p>
+          <br>
+          <p><strong>Example</strong> — year <strong style="color:var(--text)">2026</strong>, so <code>y = 26</code>:</p>
+          <br>
+          <table>
+            <thead><tr><th>Part</th><th>Calculation</th><th>Result</th></tr></thead>
+            <tbody>
+              <tr><td>⌊26 / 12⌋</td><td>How many times does 12 fit?</td><td class="highlight">2</td></tr>
+              <tr><td>26 mod 12</td><td>Remainder</td><td class="highlight">2</td></tr>
+              <tr><td>⌊2 / 4⌋</td><td>Leap correction</td><td class="highlight">0</td></tr>
+              <tr><td><strong>Sum</strong></td><td>2 + 2 + 0</td><td class="highlight">4</td></tr>
+            </tbody>
+          </table>
+          <br>
+          <p>Add the century anchor: <code>2 + 4 = 6</code>. Take mod 7: <code>6 mod 7 = 6</code> → <strong style="color:var(--text)">Saturday</strong>. That's the Doomsday for 2026.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Step 3 — Use Doomsday Dates</h2>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Anchor dates that always land on Doomsday</h3>
+          <p>Memorize these — they all fall on the Doomsday of any given year:</p>
+          <br>
+          <table>
+            <thead><tr><th>Month</th><th>Doomsday Dates</th><th>Mnemonic</th></tr></thead>
+            <tbody>
+              <tr><td>Jan</td><td>3 (4 in leap year)</td><td>"3 until leap, 4 on leap"</td></tr>
+              <tr><td>Feb</td><td>28 (29 in leap year)</td><td>Last day of Feb</td></tr>
+              <tr><td>Mar</td><td>7, 14, 21, 28</td><td>Every 7th (Pi day: Mar 14)</td></tr>
+              <tr><td>Apr</td><td>4</td><td>"<strong style="color:var(--accent)">4/4</strong>, 6/6, 8/8, 10/10, 12/12"</td></tr>
+              <tr><td>May</td><td>9</td><td>"9-to-5 at 7-Eleven": 5/9, 7/11</td></tr>
+              <tr><td>Jun</td><td>6</td><td>4/4, 6/6, 8/8…</td></tr>
+              <tr><td>Jul</td><td>11</td><td>9-to-5 at 7-Eleven: 7/11</td></tr>
+              <tr><td>Aug</td><td>8</td><td>4/4, 6/6, 8/8…</td></tr>
+              <tr><td>Sep</td><td>5</td><td>9-to-5 at 7-Eleven: 9/5</td></tr>
+              <tr><td>Oct</td><td>10</td><td>4/4, 6/6, 8/8, 10/10…</td></tr>
+              <tr><td>Nov</td><td>7</td><td>9-to-5 at 7-Eleven: 11/7</td></tr>
+              <tr><td>Dec</td><td>12</td><td>4/4, 6/6, 8/8, 10/10, 12/12</td></tr>
+            </tbody>
+          </table>
+          <br>
+          <p>🧠 Key mnemonics: <strong style="color:var(--accent)">"4/4, 6/6, 8/8, 10/10, 12/12"</strong> for even months and <strong style="color:var(--accent)">"I work 9-to-5 at 7-Eleven"</strong> for 5/9, 7/11, 9/5, 11/7.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Step 4 — Count to the Target Date</h2>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Find the nearest Doomsday, then count</h3>
+          <p>Find the closest Doomsday date in the same month. Then count forward or backward, adding/subtracting days mod 7.</p>
+          <br>
+          <p><strong>Example</strong> — what day is <strong style="color:var(--text)">15 March 2026</strong>?</p>
+          <br>
+          <table>
+            <thead><tr><th>Step</th><th>Result</th></tr></thead>
+            <tbody>
+              <tr><td>Doomsday of 2026</td><td class="highlight">Saturday (6)</td></tr>
+              <tr><td>Closest March Doomsday</td><td>Mar 14 = Doomsday = Saturday</td></tr>
+              <tr><td>Mar 15 = Mar 14 + 1</td><td class="highlight">Sunday ✓</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Day Codes</h2>
+      <div class="day-grid">
+        <div class="day-chip"><div class="num">0</div><div class="name">Sun</div></div>
+        <div class="day-chip"><div class="num">1</div><div class="name">Mon</div></div>
+        <div class="day-chip"><div class="num">2</div><div class="name">Tue</div></div>
+        <div class="day-chip"><div class="num">3</div><div class="name">Wed</div></div>
+        <div class="day-chip"><div class="num">4</div><div class="name">Thu</div></div>
+        <div class="day-chip"><div class="num">5</div><div class="name">Fri</div></div>
+        <div class="day-chip"><div class="num">6</div><div class="name">Sat</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- REFERENCE TAB -->
+  <div id="tab-ref" class="hidden">
+
+    <div class="card">
+      <h2>Century Anchors</h2>
+      <table>
+        <thead><tr><th>Century</th><th>Anchor</th></tr></thead>
+        <tbody>
+          <tr class="century-row"><td>1800–1899</td><td>Friday (5)</td></tr>
+          <tr class="century-row"><td>1900–1999</td><td>Wednesday (3)</td></tr>
+          <tr class="century-row"><td>2000–2099</td><td>Tuesday (2)</td></tr>
+          <tr class="century-row"><td>2100–2199</td><td>Sunday (0)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Year Formula</h2>
+      <div class="formula">Doomsday = (century_anchor + ⌊y/12⌋ + (y mod 12) + ⌊(y mod 12)/4⌋) mod 7</div>
+      <p style="font-size:0.85rem;color:var(--muted);text-align:center">where <code>y</code> = last two digits of year</p>
+    </div>
+
+    <div class="card">
+      <h2>Doomsday Dates Per Month</h2>
+      <table>
+        <thead><tr><th>Month</th><th>Doomsday Dates</th></tr></thead>
+        <tbody>
+          <tr><td>January</td><td>3* / 4** (*non-leap / **leap year)</td></tr>
+          <tr><td>February</td><td>28* / 29**</td></tr>
+          <tr><td>March</td><td>7, 14, 21, 28 (every 7th)</td></tr>
+          <tr><td>April</td><td>4, 11, 18, 25</td></tr>
+          <tr><td>May</td><td>2, 9, 16, 23, 30</td></tr>
+          <tr><td>June</td><td>6, 13, 20, 27</td></tr>
+          <tr><td>July</td><td>4, 11, 18, 25</td></tr>
+          <tr><td>August</td><td>1, 8, 15, 22, 29</td></tr>
+          <tr><td>September</td><td>5, 12, 19, 26</td></tr>
+          <tr><td>October</td><td>3, 10, 17, 24, 31</td></tr>
+          <tr><td>November</td><td>7, 14, 21, 28</td></tr>
+          <tr><td>December</td><td>5, 12, 19, 26</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Mnemonics</h2>
+      <div class="step">
+        <div class="step-num">①</div>
+        <div class="step-body">
+          <h3>Even months: "The last of the doubles"</h3>
+          <p><code>4/4</code>, <code>6/6</code>, <code>8/8</code>, <code>10/10</code>, <code>12/12</code> are all Doomsdays.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">②</div>
+        <div class="step-body">
+          <h3>Odd months: "9-to-5 at 7-Eleven"</h3>
+          <p><code>5/9</code>, <code>9/5</code>, <code>7/11</code>, <code>11/7</code> are Doomsdays.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">③</div>
+        <div class="step-body">
+          <h3>Leap year check</h3>
+          <p>Divisible by 4? Leap. Divisible by 100? Not leap. Divisible by 400? Leap again.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PRACTICE TAB -->
+  <div id="tab-practice" class="hidden">
+
+    <div class="card" style="padding-bottom:1rem">
+      <div class="score-bar">
+        <div><span>Correct: </span><b id="correct-count">0</b></div>
+        <div><span>Wrong: </span><b id="wrong-count">0</b></div>
+        <div><span>Streak: </span><b id="streak-count">0</b></div>
+      </div>
+
+      <div class="practice-date">
+        <div class="date-big" id="practice-date-display">—</div>
+      </div>
+
+      <div class="day-buttons" id="day-buttons">
+        <!-- filled by JS -->
+      </div>
+
+      <div class="solution" id="solution">
+        <h3>SOLUTION</h3>
+        <div id="sol-content"></div>
+      </div>
+
+      <button class="new-btn" id="new-btn" onclick="newQuestion()">New Date →</button>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+let correct = 0, wrong = 0, streak = 0;
+let currentAnswer = 0;
+let answered = false;
+
+function showTab(name) {
+  ['learn','ref','practice'].forEach(t => {
+    document.getElementById('tab-'+t).classList.add('hidden');
+    document.querySelectorAll('.tab')[['learn','ref','practice'].indexOf(t)].classList.remove('active');
+  });
+  document.getElementById('tab-'+name).classList.remove('hidden');
+  document.querySelectorAll('.tab')[['learn','ref','practice'].indexOf(name)].classList.add('active');
+  if (name === 'practice' && !document.getElementById('practice-date-display').dataset.set) {
+    newQuestion();
+  }
+}
+
+function isLeap(y) {
+  return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+}
+
+function doomsday(year) {
+  const centuryAnchors = {18:5, 19:3, 20:2, 21:0};
+  const c = Math.floor(year / 100);
+  const anchor = centuryAnchors[c] ?? 2;
+  const y = year % 100;
+  const a = Math.floor(y/12) + (y%12) + Math.floor((y%12)/4);
+  return (anchor + a) % 7;
+}
+
+function getDayOfWeek(year, month, day) {
+  const d = new Date(year, month-1, day);
+  return d.getDay();
+}
+
+function doomsdayDatesForMonth(month, year) {
+  const leap = isLeap(year);
+  const map = {
+    1: leap ? 4 : 3,
+    2: leap ? 29 : 28,
+    3: 7, 4: 4, 5: 9, 6: 6,
+    7: 11, 8: 8, 9: 5, 10: 10,
+    11: 7, 12: 12
+  };
+  return map[month];
+}
+
+function monthName(m) {
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1];
+}
+
+function randomDate() {
+  const year = 1900 + Math.floor(Math.random() * 200);
+  const month = 1 + Math.floor(Math.random() * 12);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const day = 1 + Math.floor(Math.random() * daysInMonth);
+  return {year, month, day};
+}
+
+function newQuestion() {
+  answered = false;
+  document.getElementById('solution').classList.remove('show');
+  const {year, month, day} = randomDate();
+  currentAnswer = getDayOfWeek(year, month, day);
+  const display = `${day} ${monthName(month)} ${year}`;
+  const el = document.getElementById('practice-date-display');
+  el.textContent = display;
+  el.dataset.set = '1';
+  el.dataset.year = year;
+  el.dataset.month = month;
+  el.dataset.day = day;
+
+  // build buttons
+  const btns = document.getElementById('day-buttons');
+  btns.innerHTML = '';
+  DAYS_SHORT.forEach((d, i) => {
+    const b = document.createElement('button');
+    b.className = 'day-btn';
+    b.textContent = d;
+    b.onclick = () => guess(i, b);
+    btns.appendChild(b);
+  });
+}
+
+function guess(dayIndex, btn) {
+  if (answered) return;
+  answered = true;
+
+  const btns = document.querySelectorAll('.day-btn');
+  if (dayIndex === currentAnswer) {
+    btn.classList.add('correct');
+    correct++; streak++;
+  } else {
+    btn.classList.add('wrong');
+    btns[currentAnswer].classList.add('correct');
+    wrong++; streak = 0;
+  }
+
+  document.getElementById('correct-count').textContent = correct;
+  document.getElementById('wrong-count').textContent = wrong;
+  document.getElementById('streak-count').textContent = streak;
+
+  // Show solution
+  showSolution();
+}
+
+function showSolution() {
+  const el = document.getElementById('practice-date-display');
+  const year = +el.dataset.year;
+  const month = +el.dataset.month;
+  const day = +el.dataset.day;
+
+  const leap = isLeap(year);
+  const centuryAnchors = {18:5, 19:3, 20:2, 21:0};
+  const c = Math.floor(year / 100);
+  const anchor = centuryAnchors[c] ?? 2;
+  const anchorDay = DAYS[anchor];
+  const y = year % 100;
+  const p1 = Math.floor(y/12);
+  const p2 = y%12;
+  const p3 = Math.floor(p2/4);
+  const dd = (anchor + p1 + p2 + p3) % 7;
+  const ddDay = DAYS[dd];
+  const nearestDD = doomsdayDatesForMonth(month, year);
+  const diff = day - nearestDD;
+  const answer = ((dd + diff) % 7 + 7) % 7;
+
+  const html = `
+    <div class="sol-step">
+      <div class="sol-label">Century anchor</div>
+      <div class="sol-val">${year < 2000 ? '1900s' : year < 2100 ? '2000s' : '2100s'} → <span class="accent">${anchorDay} (${anchor})</span></div>
+    </div>
+    <div class="sol-step">
+      <div class="sol-label">Year calc (y=${y})</div>
+      <div class="sol-val">⌊${y}/12⌋ + ${y}%12 + ⌊${p2}/4⌋ = <span class="accent">${p1} + ${p2} + ${p3} = ${p1+p2+p3}</span></div>
+    </div>
+    <div class="sol-step">
+      <div class="sol-label">Doomsday ${year}</div>
+      <div class="sol-val">(${anchor} + ${p1+p2+p3}) mod 7 = <span class="accent">${dd} → ${ddDay}</span></div>
+    </div>
+    <div class="sol-step">
+      <div class="sol-label">Nearest anchor</div>
+      <div class="sol-val">${monthName(month)} ${nearestDD} = Doomsday = <span class="accent">${ddDay}</span></div>
+    </div>
+    <div class="sol-step">
+      <div class="sol-label">Count to ${day}</div>
+      <div class="sol-val">${day} − ${nearestDD} = ${diff > 0 ? '+' : ''}${diff} → <span class="accent">${DAYS[answer]}</span></div>
+    </div>
+  `;
+
+  document.getElementById('sol-content').innerHTML = html;
+  document.getElementById('solution').classList.add('show');
+}
+</script>
+</body>
+</html>
