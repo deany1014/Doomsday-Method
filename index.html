@@ -491,7 +491,7 @@ function monthName(m) {
 }
 
 function randomDate() {
-  const year = 1900 + Math.floor(Math.random() * 200);
+  const year = 2026; // 1900 + Math.floor(Math.random() * 200);
   const month = 1 + Math.floor(Math.random() * 12);
   const daysInMonth = new Date(year, month, 0).getDate();
   const day = 1 + Math.floor(Math.random() * daysInMonth);
