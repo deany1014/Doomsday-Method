@@ -221,6 +221,34 @@
   <!-- PRACTICE TAB -->
   <div id="tab-practice" class="hidden">
 
+    <div class="card" style="padding-bottom:1.5rem">
+      <h2>Options</h2>
+      <div class="options-grid">
+        <div class="option-group">
+          <label>Start of Week</label>
+          <div class="option-buttons">
+            <button class="option-btn active" onclick="setOption('weekStart', 1)">Monday</button>
+            <button class="option-btn" onclick="setOption('weekStart', 0)">Sunday</button>
+          </div>
+        </div>
+        <div class="option-group">
+          <label>Year</label>
+          <div class="option-buttons">
+            <button class="option-btn active" onclick="setOption('yearMode', 'random')">Random</button>
+            <button class="option-btn" onclick="setOption('yearMode', 'fixed')">Specified</button>
+          </div>
+          <input type="number" id="year-input" min="1800" max="2199" value="2026" style="display:none;">
+        </div>
+        <div class="option-group">
+          <label>Show Month Number</label>
+          <div class="option-buttons">
+            <button class="option-btn" onclick="setOption('showMonthNum', false)">No</button>
+            <button class="option-btn active" onclick="setOption('showMonthNum', true)">Yes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="card" style="padding-bottom:1rem">
       <div class="score-bar">
         <div><span>Correct: </span><b id="correct-count">0</b></div>

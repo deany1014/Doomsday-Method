@@ -1,9 +1,63 @@
 const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 let correct = 0, wrong = 0, streak = 0;
 let currentAnswer = 0;
 let answered = false;
+
+// Practice options
+let weekStart = 1; // 0 = Sunday, 1 = Monday
+let yearMode = 'random'; // 'random' or 'fixed'
+let fixedYear = 2026;
+let showMonthNum = true;
+
+function setOption(option, value) {
+  if (option === 'weekStart') {
+    weekStart = value;
+  } else if (option === 'yearMode') {
+    yearMode = value;
+    const input = document.getElementById('year-input');
+    if (value === 'fixed') {
+      input.style.display = 'block';
+      fixedYear = parseInt(input.value) || 2026;
+    } else {
+      input.style.display = 'none';
+    }
+  } else if (option === 'showMonthNum') {
+    showMonthNum = value;
+  }
+  
+  // Update button states
+  updateOptionButtons(option, value);
+  
+  // Reset practice if already started
+  if (document.getElementById('practice-date-display').dataset.set) {
+    newQuestion();
+  }
+}
+
+function updateOptionButtons(option, value) {
+  // Find all option groups and update the appropriate one
+  const optionGroups = document.querySelectorAll('.option-group');
+  
+  if (option === 'weekStart') {
+    const weekBtns = optionGroups[0].querySelectorAll('.option-btn');
+    weekBtns.forEach(btn => btn.classList.remove('active'));
+    weekBtns[value === 1 ? 0 : 1].classList.add('active');
+  } else if (option === 'yearMode') {
+    const yearBtns = optionGroups[1].querySelectorAll('.option-btn');
+    yearBtns.forEach(btn => btn.classList.remove('active'));
+    yearBtns[value === 'random' ? 0 : 1].classList.add('active');
+  } else if (option === 'showMonthNum') {
+    const monthBtns = optionGroups[2].querySelectorAll('.option-btn');
+    monthBtns.forEach(btn => btn.classList.remove('active'));
+    monthBtns[value ? 1 : 0].classList.add('active');
+  }
+}
+
+let yearInputListenerAdded = false;
 
 function showTab(name) {
   ['learn','ref','practice'].forEach(t => {
@@ -12,8 +66,21 @@ function showTab(name) {
   });
   document.getElementById('tab-'+name).classList.remove('hidden');
   document.querySelectorAll('.tab')[['learn','ref','practice'].indexOf(name)].classList.add('active');
-  if (name === 'practice' && !document.getElementById('practice-date-display').dataset.set) {
-    newQuestion();
+  if (name === 'practice') {
+    if (!document.getElementById('practice-date-display').dataset.set) {
+      newQuestion();
+    }
+    // Set up year input listener (only once)
+    if (!yearInputListenerAdded) {
+      const yearInput = document.getElementById('year-input');
+      yearInput.addEventListener('change', function() {
+        fixedYear = parseInt(this.value) || 2026;
+        if (yearMode === 'fixed' && document.getElementById('practice-date-display').dataset.set) {
+          newQuestion();
+        }
+      });
+      yearInputListenerAdded = true;
+    }
   }
 }
 
@@ -48,11 +115,12 @@ function doomsdayDatesForMonth(month, year) {
 }
 
 function monthName(m) {
-  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1];
+  const shortName = MONTHS_SHORT[m-1];
+  return showMonthNum ? `${shortName} (${m})` : shortName;
 }
 
 function randomDate() {
-  const year = 2026; // 1900 + Math.floor(Math.random() * 200);
+  const year = yearMode === 'fixed' ? fixedYear : 2000 + Math.floor(Math.random() * 200);
   const month = 1 + Math.floor(Math.random() * 12);
   const daysInMonth = new Date(year, month, 0).getDate();
   const day = 1 + Math.floor(Math.random() * daysInMonth);
@@ -75,11 +143,24 @@ function newQuestion() {
   // build buttons
   const btns = document.getElementById('day-buttons');
   btns.innerHTML = '';
-  DAYS_SHORT.forEach((d, i) => {
+  
+  // Create day order based on weekStart setting
+  let dayOrder = [];
+  if (weekStart === 0) {
+    // Sunday first
+    dayOrder = Array.from(DAYS_SHORT);
+  } else {
+    // Monday first
+    dayOrder = DAYS_SHORT.slice(1).concat(DAYS_SHORT.slice(0, 1));
+  }
+  
+  dayOrder.forEach((d, i) => {
     const b = document.createElement('button');
     b.className = 'day-btn';
     b.textContent = d;
-    b.onclick = () => guess(i, b);
+    // Map to actual day index (0-6)
+    const actualDayIndex = weekStart === 0 ? i : (i + 1) % 7;
+    b.onclick = () => guess(actualDayIndex, b);
     btns.appendChild(b);
   });
 }

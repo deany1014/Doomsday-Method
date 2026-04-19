@@ -184,4 +184,45 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   text-align: center; letter-spacing: 0.05em; margin: 1rem 0;
 }
 
+/* OPTIONS */
+.options-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem;
+}
+
+.option-group {
+  display: flex; flex-direction: column; gap: 0.65rem;
+}
+
+.option-group label {
+  font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em;
+  color: var(--muted); text-transform: uppercase;
+}
+
+.option-buttons {
+  display: flex; gap: 0.5rem;
+}
+
+.option-btn {
+  flex: 1; padding: 0.5rem 0.75rem; text-align: center; cursor: pointer;
+  background: var(--border); border: 1px solid transparent;
+  border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 0.75rem;
+  color: var(--muted); transition: all 0.15s;
+}
+
+.option-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+.option-btn.active {
+  background: var(--accent); color: var(--bg); font-weight: 700;
+}
+
+#year-input {
+  padding: 0.5rem 0.75rem; background: var(--border); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+}
+
+#year-input:focus {
+  outline: none; border-color: var(--accent);
+}
+
 .hidden { display: none; }
