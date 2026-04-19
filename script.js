@@ -175,7 +175,9 @@ function guess(dayIndex, btn) {
     correct++; streak++;
   } else {
     btn.classList.add('wrong');
-    btns[currentAnswer].classList.add('correct');
+    // Calculate the correct button index based on weekStart setting
+    const correctButtonIndex = weekStart === 0 ? currentAnswer : (currentAnswer - 1 + 7) % 7;
+    btns[correctButtonIndex].classList.add('correct');
     wrong++; streak = 0;
   }
 
